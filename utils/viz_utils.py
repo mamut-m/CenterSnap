@@ -1,15 +1,17 @@
+import colorsys
+import copy
+import random
+
+import cv2
+import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
-from simnet.lib import camera
-import matplotlib.patches as patches
-import cv2
-import random
 import open3d as o3d
+import plotly.graph_objects as go
 import torch
 from matplotlib.cm import get_cmap
-import copy
-import colorsys
-import plotly.graph_objects as go
+from simnet.lib import camera
+
 
 def align_vector_to_another(a=np.array([0, 0, 1]), b=np.array([1, 0, 0])):
     """
@@ -44,8 +46,11 @@ class LineMesh(object):
             radius {float} -- radius of cylinder (default: {0.15})
         """
         self.points = np.array(points)
-        self.lines = np.array(
-            lines) if lines is not None else self.lines_from_ordered_points(self.points)
+        self.lines = (
+            np.array(lines)
+            if lines is not None
+            else self.lines_from_ordered_points(self.points)
+        )
         self.colors = np.array(colors)
         self.radius = radius
         self.cylinder_segments = []
@@ -74,14 +79,15 @@ class LineMesh(object):
             translation = first_points[i, :] + line_segment * line_length * 0.5
             # create cylinder and apply transformations
             cylinder_segment = o3d.geometry.TriangleMesh.create_cylinder(
-                self.radius, line_length)
-            cylinder_segment = cylinder_segment.translate(
-                translation, relative=False)
+                self.radius, line_length
+            )
+            cylinder_segment = cylinder_segment.translate(translation, relative=False)
             if axis is not None:
                 axis_a = axis * angle
                 cylinder_segment = cylinder_segment.rotate(
-                    R=o3d.geometry.get_rotation_matrix_from_axis_angle(axis_a), 
-                    center=cylinder_segment.get_center())
+                    R=o3d.geometry.get_rotation_matrix_from_axis_angle(axis_a),
+                    center=cylinder_segment.get_center(),
+                )
                 # cylinder_segment = cylinder_segment.rotate(
                 #   axis_a, center=True, type=o3d.geometry.RotationType.AxisAngle)
             # color cylinder
@@ -100,10 +106,11 @@ class LineMesh(object):
         for cylinder in self.cylinder_segments:
             vis.remove_geometry(cylinder)
 
+
 def line_set_mesh(points_array):
-  open_3d_lines = [
+    open_3d_lines = [
         [0, 1],
-        [7,3],
+        [7, 3],
         [1, 3],
         [2, 0],
         [3, 2],
@@ -116,17 +123,17 @@ def line_set_mesh(points_array):
         [4, 5],
         [5, 7],
     ]
-  colors = random_colors(len(open_3d_lines))
-  open_3d_lines = np.array(open_3d_lines)
-  line_set = LineMesh(points_array, open_3d_lines,colors=colors, radius=0.001)
-  line_set = line_set.cylinder_segments
-  return line_set
+    colors = random_colors(len(open_3d_lines))
+    open_3d_lines = np.array(open_3d_lines)
+    line_set = LineMesh(points_array, open_3d_lines, colors=colors, radius=0.001)
+    line_set = line_set.cylinder_segments
+    return line_set
 
 
 def line_set(points_array):
-  open_3d_lines = [
+    open_3d_lines = [
         [0, 1],
-        [7,3],
+        [7, 3],
         [1, 3],
         [2, 0],
         [3, 2],
@@ -139,14 +146,14 @@ def line_set(points_array):
         [4, 5],
         [5, 7],
     ]
-  # colors = [[1, 0, 0] for i in range(len(lines))]
-  colors = random_colors(len(open_3d_lines))
-  line_set = o3d.geometry.LineSet(
-      points=o3d.utility.Vector3dVector(points_array),
-      lines=o3d.utility.Vector2iVector(open_3d_lines),
-  )
-  line_set.colors = o3d.utility.Vector3dVector(colors)
-  return line_set
+    # colors = [[1, 0, 0] for i in range(len(lines))]
+    colors = random_colors(len(open_3d_lines))
+    line_set = o3d.geometry.LineSet(
+        points=o3d.utility.Vector3dVector(points_array),
+        lines=o3d.utility.Vector2iVector(open_3d_lines),
+    )
+    line_set.colors = o3d.utility.Vector3dVector(colors)
+    return line_set
 
 
 def visualize_projected_points(color_img, pcd_array, box_obb, _DEBUG_FILE_PATH, uid):
@@ -164,17 +171,30 @@ def visualize_projected_points(color_img, pcd_array, box_obb, _DEBUG_FILE_PATH, 
         [4, 5],
         [2, 7],
     ]
-    edges_corners = [[0, 1], [0, 2], [0, 4], [1, 3], [1, 5], [2, 3], [2, 6], [3, 7], [4, 5], [4, 6], [5, 7], [6, 7]]
+    edges_corners = [
+        [0, 1],
+        [0, 2],
+        [0, 4],
+        [1, 3],
+        [1, 5],
+        [2, 3],
+        [2, 6],
+        [3, 7],
+        [4, 5],
+        [4, 6],
+        [5, 7],
+        [6, 7],
+    ]
     plt.xlim((0, color_img.shape[1]))
     plt.ylim((0, color_img.shape[0]))
     # Projections
-    color = ['g', 'y', 'b', 'r', 'm', 'c', '#3a7c00', '#3a7cd9', '#8b7cd9', '#211249']
+    color = ["g", "y", "b", "r", "m", "c", "#3a7c00", "#3a7cd9", "#8b7cd9", "#211249"]
     for i, points_2d_mesh in enumerate(pcd_array):
-        plt.scatter(points_2d_mesh[:,0], points_2d_mesh[:,1], color=color[i], s=2)
+        plt.scatter(points_2d_mesh[:, 0], points_2d_mesh[:, 1], color=color[i], s=2)
         # for points in points_2d_mesh:
-            
+
     plt.gca().invert_yaxis()
-    plt.axis('off')
+    plt.axis("off")
     plt.imshow(color_img)
     # plt_name = name+'plot_points'
 
@@ -183,9 +203,9 @@ def visualize_projected_points(color_img, pcd_array, box_obb, _DEBUG_FILE_PATH, 
 
     for points_2d in box_obb:
         for edge in open_3d_lines:
-            plt.plot(points_2d[edge, 0], points_2d[edge, 1], color='b', linewidth=1.0)
+            plt.plot(points_2d[edge, 0], points_2d[edge, 1], color="b", linewidth=1.0)
 
-    plt.savefig(str(_DEBUG_FILE_PATH / f'{uid}_projection.png'))
+    plt.savefig(str(_DEBUG_FILE_PATH / f"{uid}_projection.png"))
     # plt.axis('off')
     # plt.show()
     # plt.close('all')
@@ -206,17 +226,31 @@ def visualize_projected_points_only(color_img, pcd_array):
         [4, 5],
         [2, 7],
     ]
-    edges_corners = [[0, 1], [0, 2], [0, 4], [1, 3], [1, 5], [2, 3], [2, 6], [3, 7], [4, 5], [4, 6], [5, 7], [6, 7]]
+    edges_corners = [
+        [0, 1],
+        [0, 2],
+        [0, 4],
+        [1, 3],
+        [1, 5],
+        [2, 3],
+        [2, 6],
+        [3, 7],
+        [4, 5],
+        [4, 6],
+        [5, 7],
+        [6, 7],
+    ]
     plt.xlim((0, color_img.shape[1]))
     plt.ylim((0, color_img.shape[0]))
     # Projections
-    color = ['g', 'y', 'b', 'r', 'm', 'c', '#3a7c00', '#3a7cd9', '#8b7cd9', '#211249']
+    color = ["g", "y", "b", "r", "m", "c", "#3a7c00", "#3a7cd9", "#8b7cd9", "#211249"]
     for i, points_2d_mesh in enumerate(pcd_array):
-        plt.scatter(points_2d_mesh[:,0], points_2d_mesh[:,1], color=color[i], s=2)
+        plt.scatter(points_2d_mesh[:, 0], points_2d_mesh[:, 1], color=color[i], s=2)
     plt.gca().invert_yaxis()
-    plt.axis('off')
+    plt.axis("off")
     plt.imshow(color_img)
     plt.show()
+
 
 def show_projected_points(color_img, pcd_array):
     open_3d_lines = [
@@ -234,16 +268,29 @@ def show_projected_points(color_img, pcd_array):
         [2, 7],
     ]
     fig = plt.figure()
-    edges_corners = [[0, 1], [0, 2], [0, 4], [1, 3], [1, 5], [2, 3], [2, 6], [3, 7], [4, 5], [4, 6], [5, 7], [6, 7]]
+    edges_corners = [
+        [0, 1],
+        [0, 2],
+        [0, 4],
+        [1, 3],
+        [1, 5],
+        [2, 3],
+        [2, 6],
+        [3, 7],
+        [4, 5],
+        [4, 6],
+        [5, 7],
+        [6, 7],
+    ]
     plt.xlim((0, color_img.shape[1]))
     plt.ylim((0, color_img.shape[0]))
     # Projections
-    plt.imshow(color_img[...,::-1])
-    color = ['g', 'y', 'b', 'r', 'm', 'c', '#3a7c00', '#3a7cd9', '#8b7cd9', '#211249']
+    plt.imshow(color_img[..., ::-1])
+    color = ["g", "y", "b", "r", "m", "c", "#3a7c00", "#3a7cd9", "#8b7cd9", "#211249"]
     for i, points_2d_mesh in enumerate(pcd_array):
-        plt.scatter(points_2d_mesh[:,0], points_2d_mesh[:,1], color=color[i], s=2)
+        plt.scatter(points_2d_mesh[:, 0], points_2d_mesh[:, 1], color=color[i], s=2)
     plt.gca().invert_yaxis()
-    plt.axis('off')
+    plt.axis("off")
     fig.canvas.draw()
     color_img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
     color_img = color_img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
@@ -266,18 +313,34 @@ def save_projected_points(color_img, pcd_array, output_path, uid):
         [4, 5],
         [2, 7],
     ]
-    edges_corners = [[0, 1], [0, 2], [0, 4], [1, 3], [1, 5], [2, 3], [2, 6], [3, 7], [4, 5], [4, 6], [5, 7], [6, 7]]
+    edges_corners = [
+        [0, 1],
+        [0, 2],
+        [0, 4],
+        [1, 3],
+        [1, 5],
+        [2, 3],
+        [2, 6],
+        [3, 7],
+        [4, 5],
+        [4, 6],
+        [5, 7],
+        [6, 7],
+    ]
     plt.figure()
     plt.xlim((0, color_img.shape[1]))
     plt.ylim((0, color_img.shape[0]))
     # Projections
-    color = ['g', 'y', 'b', 'r', 'm', 'c', '#3a7c00', '#3a7cd9', '#8b7cd9', '#211249']
+    color = ["g", "y", "b", "r", "m", "c", "#3a7c00", "#3a7cd9", "#8b7cd9", "#211249"]
     for i, points_2d_mesh in enumerate(pcd_array):
-        plt.scatter(points_2d_mesh[:,0], points_2d_mesh[:,1], color=color[i], s=2)
+        plt.scatter(
+            points_2d_mesh[:, 0], points_2d_mesh[:, 1], color=color[i % len(color)], s=2
+        )
     plt.gca().invert_yaxis()
-    plt.axis('off')
-    plt.imshow(color_img[:,:,::-1])
-    plt.savefig(output_path +'/projection'+str(uid)+'.png')
+    plt.axis("off")
+    plt.imshow(color_img[:, :, ::-1])
+    plt.savefig(output_path + "/projection" + str(uid) + ".png")
+
 
 def random_colors(N, bright=True):
     """
@@ -291,10 +354,11 @@ def random_colors(N, bright=True):
     # random.shuffle(colors)
     return colors
 
+
 def visualize(detections, img, classes, seg_mask, object_key_to_name, filename):
     colors = random_colors(len(classes))
-    fig, ax = plt.subplots(1, figsize=(10,7.5))
-    plt.axis('off')
+    fig, ax = plt.subplots(1, figsize=(10, 7.5))
+    plt.axis("off")
     ax.imshow(cv2.cvtColor(img.astype(np.uint8), cv2.COLOR_BGR2RGB))
     if detections is not None:
         # unique_labels = detections[:, -1].cpu().unique()
@@ -305,17 +369,23 @@ def visualize(detections, img, classes, seg_mask, object_key_to_name, filename):
             colored_mask[seg_mask == ii, :] = color
         # browse detections and draw bounding boxes
         for (x1, y1, x2, y2), cls_pred, color in zip(detections, classes, bbox_colors):
-            box_h = (y2 - y1)
-            box_w = (x2 - x1)
+            box_h = y2 - y1
+            box_w = x2 - x1
             # color = bbox_colors
-            bbox = patches.Rectangle((x1, y1), box_w, box_h,
-                linewidth=2, edgecolor=color, facecolor='none')
+            bbox = patches.Rectangle(
+                (x1, y1), box_w, box_h, linewidth=2, edgecolor=color, facecolor="none"
+            )
             ax.add_patch(bbox)
             text = object_key_to_name[cls_pred]
-            plt.text(x1, y1, s=text, 
-                    color='white', verticalalignment='top',
-                    bbox={'color': color, 'pad': 0})
-        plt.axis('off')
+            plt.text(
+                x1,
+                y1,
+                s=text,
+                color="white",
+                verticalalignment="top",
+                bbox={"color": color, "pad": 0},
+            )
+        plt.axis("off")
         # save image
         plt.imshow(colored_mask, alpha=0.5)
         # plt.show()
@@ -327,10 +397,10 @@ def visualize(detections, img, classes, seg_mask, object_key_to_name, filename):
 def draw_bboxes(img, img_pts, axes, color):
     img_pts = np.int32(img_pts).reshape(-1, 2)
     # draw ground layer in darker color
-    
+
     # color_ground = (int(color[0]*0.3), int(color[1]*0.3), int(color[2]*0.3))
     color_ground = (int(color[0]), int(color[1]), int(color[2]))
-    
+
     for i, j in zip([4, 5, 6, 7], [5, 7, 4, 6]):
         img = cv2.line(img, tuple(img_pts[i]), tuple(img_pts[j]), color_ground, 3)
     # draw pillars in minor darker color
@@ -345,9 +415,12 @@ def draw_bboxes(img, img_pts, axes, color):
     # draw axes
     img = cv2.arrowedLine(img, tuple(axes[0]), tuple(axes[1]), (0, 0, 255), 4)
     img = cv2.arrowedLine(img, tuple(axes[0]), tuple(axes[3]), (255, 0, 0), 4)
-    img = cv2.arrowedLine(img, tuple(axes[0]), tuple(axes[2]), (0, 255, 0), 4) ## y last
+    img = cv2.arrowedLine(
+        img, tuple(axes[0]), tuple(axes[2]), (0, 255, 0), 4
+    )  ## y last
 
     return img
+
 
 def custom_draw_geometry_with_rotation(pcd):
     def rotate_view(vis):
@@ -358,14 +431,14 @@ def custom_draw_geometry_with_rotation(pcd):
         ctr = vis.get_view_control()
         ctr.rotate(5.0, 0.0)
         # return False
-    
-    o3d.visualization.draw_geometries_with_animation_callback(pcd,
-                                                              rotate_view)
+
+    o3d.visualization.draw_geometries_with_animation_callback(pcd, rotate_view)
 
 
 def is_tensor(data):
     """Checks if data is a torch tensor."""
     return type(data) == torch.Tensor
+
 
 def depth2inv(depth):
     """
@@ -379,12 +452,14 @@ def depth2inv(depth):
     inv_depth : torch.Tensor or list of torch.Tensor [B,1,H,W]
         Inverse depth map
     """
-    inv_depth = 1. / depth.clamp(min=1e-6)
-    inv_depth[depth <= 0.] = 0.
+    inv_depth = 1.0 / depth.clamp(min=1e-6)
+    inv_depth[depth <= 0.0] = 0.0
     return inv_depth
 
-def viz_inv_depth(inv_depth, normalizer=None, percentile=95,
-                  colormap='plasma', filter_zeros=False):
+
+def viz_inv_depth(
+    inv_depth, normalizer=None, percentile=95, colormap="plasma", filter_zeros=False
+):
     """
     Converts an inverse depth map to a colormap for visualization.
     Parameters
@@ -414,13 +489,14 @@ def viz_inv_depth(inv_depth, normalizer=None, percentile=95,
     cm = get_cmap(colormap)
     if normalizer is None:
         normalizer = np.percentile(
-            inv_depth[inv_depth > 0] if filter_zeros else inv_depth, percentile)
-    inv_depth /= (normalizer + 1e-6)
-    return cm(np.clip(inv_depth, 0., 1.0))[:, :, :3]
+            inv_depth[inv_depth > 0] if filter_zeros else inv_depth, percentile
+        )
+    inv_depth /= normalizer + 1e-6
+    return cm(np.clip(inv_depth, 0.0, 1.0))[:, :, :3]
 
 
-def visualize_shape(filename,result_dir, shape_list):
-    """ Visualization and save image.
+def visualize_shape(filename, result_dir, shape_list):
+    """Visualization and save image.
 
     Args:
         name: window name
@@ -438,8 +514,9 @@ def visualize_shape(filename,result_dir, shape_list):
     # if name == 'laptop':
     #     ctr.translate(25.0, -60.0)
     vis.run()
-    vis.capture_screen_image(os.path.join(result_dir,filename))
+    vis.capture_screen_image(os.path.join(result_dir, filename))
     vis.destroy_window()
+
 
 def custom_draw_geometry_with_rotation(pcd):
     def rotate_view(vis):
@@ -450,9 +527,8 @@ def custom_draw_geometry_with_rotation(pcd):
         ctr = vis.get_view_control()
         ctr.rotate(1.0, 0.0)
         # return False
-    
-    o3d.visualization.draw_geometries_with_animation_callback(pcd,
-                                                              rotate_view)
+
+    o3d.visualization.draw_geometries_with_animation_callback(pcd, rotate_view)
 
 
 def draw_registration_result(source, target, transformation):
@@ -461,15 +537,16 @@ def draw_registration_result(source, target, transformation):
     source_temp.paint_uniform_color([1, 0.706, 0])
     target_temp.paint_uniform_color([0, 0.651, 0.929])
     if not transformation is None:
-      source_temp.transform(transformation)
+        source_temp.transform(transformation)
     # o3d.visualization.draw_geometries([source_temp, target_temp])
     return source_temp
+
 
 def visualize_mrcnn_boxes(detections, img, classes, object_key_to_name, filename):
     # print(classes)
     colors = random_colors(len(classes))
-    fig, ax = plt.subplots(1, figsize=(10,7.5))
-    plt.axis('off')
+    fig, ax = plt.subplots(1, figsize=(10, 7.5))
+    plt.axis("off")
     ax.imshow(cv2.cvtColor(img.astype(np.uint8), cv2.COLOR_BGR2RGB))
     # ax.imshow(img)
     # plt.show()
@@ -479,45 +556,55 @@ def visualize_mrcnn_boxes(detections, img, classes, object_key_to_name, filename
         # n_cls_preds = len(unique_labels)
         bbox_colors = random.sample(colors, len(classes))
         # browse detections and draw bounding boxes
-        for (y1, x1, y2, x2), cls_pred,color in zip(detections,classes, bbox_colors):
-            box_h = (y2 - y1)
-            box_w = (x2 - x1)
+        for (y1, x1, y2, x2), cls_pred, color in zip(detections, classes, bbox_colors):
+            box_h = y2 - y1
+            box_w = x2 - x1
             # color = bbox_colors
-            bbox = patches.Rectangle((x1, y1), box_w, box_h,
-                linewidth=6, edgecolor=color, facecolor='none')
+            bbox = patches.Rectangle(
+                (x1, y1), box_w, box_h, linewidth=6, edgecolor=color, facecolor="none"
+            )
             ax.add_patch(bbox)
             text = object_key_to_name[cls_pred]
-            plt.text(x1, y1, s=text, 
-                    color='white', verticalalignment='top',
-                    bbox={'color': color, 'pad': 0})
-        plt.axis('off')
+            plt.text(
+                x1,
+                y1,
+                s=text,
+                color="white",
+                verticalalignment="top",
+                bbox={"color": color, "pad": 0},
+            )
+        plt.axis("off")
         plt.savefig(filename)
-        plt.close()    
+        plt.close()
+
 
 def resize_and_draw(name, img, scale=2):
-  dim = (img.shape[1] * scale, img.shape[0] * scale)
-  resized_img = cv2.resize(img, dim)
-  cv2.imshow(name, img)
+    dim = (img.shape[1] * scale, img.shape[0] * scale)
+    resized_img = cv2.resize(img, dim)
+    cv2.imshow(name, img)
+
 
 def im_resize(img):
-  img = cv2.resize(img, (int(img.shape[1] / 2), int(img.shape[0] / 2)))
-  return img
+    img = cv2.resize(img, (int(img.shape[1] / 2), int(img.shape[0] / 2)))
+    return img
+
 
 def resize_upscale(img, scale=2):
-  dim = (img.shape[1] * scale, img.shape[0] * scale)
-  # resized_img = cv2.resize(img, dim)
-  return resized_img
+    dim = (img.shape[1] * scale, img.shape[0] * scale)
+    # resized_img = cv2.resize(img, dim)
+    return resized_img
 
 
 def apply_mask(image, mask, color, alpha=0.5):
-    """Apply the given mask to the image.
-    """
+    """Apply the given mask to the image."""
     for c in range(3):
-        image[:, :, c] = np.where(mask == 1,
-                                  image[:, :, c] *
-                                  (1 - alpha) + alpha * color[c] * 255,
-                                  image[:, :, c])
+        image[:, :, c] = np.where(
+            mask == 1,
+            image[:, :, c] * (1 - alpha) + alpha * color[c] * 255,
+            image[:, :, c],
+        )
     return image
+
 
 open_3d_lines = [
     [5, 3],
@@ -534,30 +621,45 @@ open_3d_lines = [
     [2, 7],
 ]
 
-edges_corners = [[0, 1], [0, 2], [0, 4], [1, 3], [1, 5], [2, 3], [2, 6], [3, 7], [4, 5], [4, 6], [5, 7], [6, 7]]
+edges_corners = [
+    [0, 1],
+    [0, 2],
+    [0, 4],
+    [1, 3],
+    [1, 5],
+    [2, 3],
+    [2, 6],
+    [3, 7],
+    [4, 5],
+    [4, 6],
+    [5, 7],
+    [6, 7],
+]
+
 
 def display_gird(img_vis, depth, peaks_vis):
-    images=[]
-    images.append(np.copy(img_vis)[...,::-1])
-    images.append(np.copy(peaks_vis)[...,::-1])
+    images = []
+    images.append(np.copy(img_vis)[..., ::-1])
+    images.append(np.copy(peaks_vis)[..., ::-1])
     depth_vis = depth2inv(torch.tensor(depth).unsqueeze(0).unsqueeze(0))
     depth_vis = viz_inv_depth(depth_vis)
     images.append(np.copy(depth_vis))
-    rows=3
+    rows = 3
     img_count = 0
     print(images[0].shape)
-    fig, axes = plt.subplots(ncols=rows, figsize=(15,15))
-    for i in range(rows):     
-            if img_count < len(images):
-                axes[i].imshow(images[img_count])
-                img_count+=1
+    fig, axes = plt.subplots(ncols=rows, figsize=(15, 15))
+    for i in range(rows):
+        if img_count < len(images):
+            axes[i].imshow(images[img_count])
+            img_count += 1
+
 
 def draw_geometries(geometries):
     graph_objects = []
 
     for geometry in geometries:
         geometry_type = geometry.get_geometry_type()
-        
+
         if geometry_type == o3d.geometry.Geometry.Type.PointCloud:
             points = np.asarray(geometry.points)
             colors = None
@@ -569,7 +671,13 @@ def draw_geometries(geometries):
                 geometry.paint_uniform_color((1.0, 0.0, 0.0))
                 colors = np.asarray(geometry.colors)
 
-            scatter_3d = go.Scatter3d(x=points[:,0], y=points[:,1], z=points[:,2], mode='markers', marker=dict(size=1, color=colors))
+            scatter_3d = go.Scatter3d(
+                x=points[:, 0],
+                y=points[:, 1],
+                z=points[:, 2],
+                mode="markers",
+                marker=dict(size=1, color=colors),
+            )
             graph_objects.append(scatter_3d)
 
         if geometry_type == o3d.geometry.Geometry.Type.TriangleMesh:
@@ -581,18 +689,27 @@ def draw_geometries(geometries):
                 colors = tuple(map(tuple, colors))
             else:
                 colors = (1.0, 0.0, 0.0)
-            
-            mesh_3d = go.Mesh3d(x=vertices[:,0], y=vertices[:,1], z=vertices[:,2], i=triangles[:,0], j=triangles[:,1], k=triangles[:,2], facecolor=colors, opacity=0.50)
+
+            mesh_3d = go.Mesh3d(
+                x=vertices[:, 0],
+                y=vertices[:, 1],
+                z=vertices[:, 2],
+                i=triangles[:, 0],
+                j=triangles[:, 1],
+                k=triangles[:, 2],
+                facecolor=colors,
+                opacity=0.50,
+            )
             graph_objects.append(mesh_3d)
-        
+
     fig = go.Figure(
         data=graph_objects,
         layout=dict(
             scene=dict(
                 xaxis=dict(visible=False),
                 yaxis=dict(visible=False),
-                zaxis=dict(visible=False)
+                zaxis=dict(visible=False),
             )
-        )
+        ),
     )
     fig.show()
